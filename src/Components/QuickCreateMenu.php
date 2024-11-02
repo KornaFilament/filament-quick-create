@@ -44,8 +44,6 @@ class QuickCreateMenu extends Component implements HasActions, HasForms
         $this->rounded = QuickCreatePlugin::get()->isRounded();
         $this->hiddenIcons = QuickCreatePlugin::get()->shouldHideIcons();
         $this->label = QuickCreatePlugin::get()->getLabel();
-
-        // Retrieve keybindings from the plugin
         $this->keyBindings = QuickCreatePlugin::get()->getKeyBindings();
     }
 
