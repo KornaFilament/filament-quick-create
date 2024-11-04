@@ -40,10 +40,11 @@ class QuickCreatePlugin implements Plugin
 
     protected bool | Closure $shouldUseModal = false;
 
+    protected string | array | Closure | null $keyBindings = null;
+
     public function boot(Panel $panel): void
     {
         Livewire::component('quick-create-menu', Components\QuickCreateMenu::class);
-
         $this->getResourcesUsing(fn () => $panel->getResources());
     }
 
@@ -184,7 +185,6 @@ class QuickCreatePlugin implements Plugin
         if (! in_array($sortBy, ['label', 'navigation'])) {
             $sortBy = 'label';
         }
-
         $this->sortBy = $sortBy;
 
         return $this;
@@ -248,5 +248,17 @@ class QuickCreatePlugin implements Plugin
         $this->shouldUseModal = $condition;
 
         return $this;
+    }
+
+    public function keyBindings(string | array | Closure | null $bindings): static
+    {
+        $this->keyBindings = $bindings;
+
+        return $this;
+    }
+
+    public function getKeyBindings(): ?array
+    {
+        return collect($this->evaluate($this->keyBindings))->toArray();
     }
 }

@@ -118,6 +118,23 @@ public function panel(Panel $panel): Panel
 }
 ```
 
+### Registering keybindings
+
+You can attach keyboard shortcuts to trigger the Quick Create dropdown. To configure these, pass the keyBindings() method to the configuration:
+
+```php
+use Awcodes\FilamentQuickCreate\QuickCreatePlugin;
+
+public function panel(Panel $panel): Panel
+{
+    return $panel
+        ->plugins([
+            QuickCreatePlugin::make()
+                ->keyBindings(['command+shift+a', 'ctrl+shift+a']),
+        ])
+}
+```
+
 ### Appearance
 
 #### Rounded

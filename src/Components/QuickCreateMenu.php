@@ -33,6 +33,8 @@ class QuickCreateMenu extends Component implements HasActions, HasForms
 
     public ?string $label = null;
 
+    public ?array $keyBindings = null;
+
     /**
      * @throws Exception
      */
@@ -42,6 +44,7 @@ class QuickCreateMenu extends Component implements HasActions, HasForms
         $this->rounded = QuickCreatePlugin::get()->isRounded();
         $this->hiddenIcons = QuickCreatePlugin::get()->shouldHideIcons();
         $this->label = QuickCreatePlugin::get()->getLabel();
+        $this->keyBindings = QuickCreatePlugin::get()->getKeyBindings();
     }
 
     /**
@@ -146,6 +149,11 @@ class QuickCreateMenu extends Component implements HasActions, HasForms
             ->toArray();
     }
 
+    public function toggleDropdown(): void
+    {
+        $this->emit('toggleQuickCreateDropdown');
+    }
+
     public function shouldBeHidden(): bool
     {
         return QuickCreatePlugin::get()->shouldBeHidden();
@@ -153,6 +161,9 @@ class QuickCreateMenu extends Component implements HasActions, HasForms
 
     public function render(): View
     {
-        return view('filament-quick-create::components.create-menu');
+        return view('filament-quick-create::components.create-menu')
+            ->with([
+                'keyBindings' => $this->keyBindings,
+            ]);
     }
 }
