@@ -7,31 +7,29 @@
 <div class="quick-create-component"
      @if($keyBindings)
          x-data="{
-        toggleDropdown() {
-            this.$refs.triggerButton.click()
-            this.$refs.triggerButton.focus()
-        }
-    }"
+            toggleDropdown() {
+                this.$refs.triggerButton.click()
+                this.$refs.triggerButton.focus()
+            }
+        }"
      @endif
 >
     @if ($resources && $this->shouldBeHidden() === false)
         <x-filament::dropdown placement="bottom-end" :teleport="true">
             <x-slot name="trigger">
                 <button
+                    @if($keyBindings)
                         x-ref="triggerButton"
-                        @click="dropdownOpen = !dropdownOpen"
-                        @if($keyBindings)
-                            x-ref="triggerButton"
                         x-mousetrap.global.{{ $keyBindings }}="toggleDropdown"
-                        @endif
-                        @class([
-                            'flex flex-shrink-0 bg-gray-100 items-center justify-center text-primary-500 hover:text-primary-900 dark:bg-gray-800 hover:bg-primary-500 dark:hover:bg-primary-500',
-                            'rounded-full' => $rounded,
-                            'rounded-md' => ! $rounded,
-                            'w-8 h-8' => ! $label,
-                            'py-1 ps-3 pe-4 gap-1' => $label,
-                        ])
-                        aria-label="{{ __('filament-quick-create::quick-create.button_label') }}"
+                    @endif
+                    @class([
+                        'flex flex-shrink-0 bg-gray-100 items-center justify-center text-primary-500 hover:text-primary-900 dark:bg-gray-800 hover:bg-primary-500 dark:hover:bg-primary-500',
+                        'rounded-full' => $rounded,
+                        'rounded-md' => ! $rounded,
+                        'w-8 h-8' => ! $label,
+                        'py-1 ps-3 pe-4 gap-1' => $label,
+                    ])
+                    aria-label="{{ __('filament-quick-create::quick-create.button_label') }}"
                 >
                     <x-filament::icon
                             alias="filament-quick-create::add"
