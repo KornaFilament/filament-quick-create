@@ -76,75 +76,101 @@ class QuickCreateMenu extends Component implements HasActions, HasForms
 
     public function getActions(): array
     {
-        return collect($this->resources)->transform(function ($resource) {
-            $r = App::make($resource['resource_name']);
+        return collect($this->resources)
+            ->transform(function ($resource) {
+                $r = App::make($resource['resource_name']);
+                $canCreateAnother = QuickCreatePlugin::get()->canCreateAnother();
 
-            return CreateAction::make($resource['action_name'])
-                ->authorize($r::canCreate())
-                ->model($resource['model'])
-                ->slideOver(fn (): bool => QuickCreatePlugin::get()->shouldUseSlideOver())
-                ->form(function ($arguments, $form) use ($r) {
-                    return $r->form($form->operation('create')->columns());
-                })->action(function (array $arguments, Form $form, CreateAction $action) use ($r): void {
-                    $model = $action->getModel();
+                if ($canCreateAnother === null) {
+                    if ($r->hasPage('create')) {
+                        $canCreateAnother = App::make($r->getPages()['create']->getPage())::canCreateAnother();
+                    } else {
+                        $page = isset($r->getPages()['index'])
+                            ? $r->getPages()['index']->getPage()
+                            : null;
 
-                    $record = $action->process(function (array $data, HasActions $livewire) use ($model, $action, $r): Model {
-                        if ($translatableContentDriver = $livewire->makeFilamentTranslatableContentDriver()) {
-                            $record = $translatableContentDriver->makeRecord($model, $data);
-                        } else {
-                            $record = new $model();
-                            $record->fill($data);
+                        if ($page) {
+                            $reflectionMethod = new \ReflectionMethod($page, 'getHeaderActions');
+                            $actions = $reflectionMethod->invoke(new $page());
+                            $createAction = collect($actions)->filter(function ($action) {
+                                return $action instanceof CreateAction;
+                            })->first();
+
+                            if ($createAction) {
+                                $canCreateAnother = $createAction->canCreateAnother();
+                            }
                         }
+                    }
+                }
 
-                        if ($relationship = $action->getRelationship()) {
-                            /** @phpstan-ignore-next-line */
-                            $relationship->save($record);
+                return CreateAction::make($resource['action_name'])
+                    ->authorize($r::canCreate())
+                    ->model($resource['model'])
+                    ->slideOver(fn (): bool => QuickCreatePlugin::get()->shouldUseSlideOver())
+                    ->form(function ($arguments, $form) use ($r) {
+                        return $r->form($form->operation('create')->columns());
+                    })
+                    ->createAnother($canCreateAnother)
+                    ->action(function (array $arguments, Form $form, CreateAction $action) use ($r): void {
+                        $model = $action->getModel();
 
-                            return $record;
-                        }
+                        $record = $action->process(function (array $data, HasActions $livewire) use ($model, $action, $r): Model {
+                            if ($translatableContentDriver = $livewire->makeFilamentTranslatableContentDriver()) {
+                                $record = $translatableContentDriver->makeRecord($model, $data);
+                            } else {
+                                $record = new $model();
+                                $record->fill($data);
+                            }
 
-                        if (
-                            $r::isScopedToTenant() &&
-                            ($tenant = Filament::getTenant())
-                        ) {
-                            $relationship = $r::getTenantRelationship($tenant);
-
-                            if ($relationship instanceof HasManyThrough) {
-                                $record->save();
+                            if ($relationship = $action->getRelationship()) {
+                                /** @phpstan-ignore-next-line */
+                                $relationship->save($record);
 
                                 return $record;
                             }
 
-                            return $relationship->save($record);
+                            if (
+                                $r::isScopedToTenant() &&
+                                ($tenant = Filament::getTenant())
+                            ) {
+                                $relationship = $r::getTenantRelationship($tenant);
+
+                                if ($relationship instanceof HasManyThrough) {
+                                    $record->save();
+
+                                    return $record;
+                                }
+
+                                return $relationship->save($record);
+                            }
+
+                            $record->save();
+
+                            return $record;
+                        });
+
+                        $action->record($record);
+                        $form->model($record)->saveRelationships();
+
+                        if ($arguments['another'] ?? false) {
+                            $action->callAfter();
+                            $action->sendSuccessNotification();
+
+                            $action->record(null);
+
+                            // Ensure that the form record is anonymized so that relationships aren't loaded.
+                            $form->model($model);
+
+                            $form->fill();
+
+                            $action->halt();
+
+                            return;
                         }
 
-                        $record->save();
-
-                        return $record;
+                        $action->success();
                     });
-
-                    $action->record($record);
-                    $form->model($record)->saveRelationships();
-
-                    if ($arguments['another'] ?? false) {
-                        $action->callAfter();
-                        $action->sendSuccessNotification();
-
-                        $action->record(null);
-
-                        // Ensure that the form record is anonymized so that relationships aren't loaded.
-                        $form->model($model);
-
-                        $form->fill();
-
-                        $action->halt();
-
-                        return;
-                    }
-
-                    $action->success();
-                });
-        })
+            })
             ->values()
             ->toArray();
     }
