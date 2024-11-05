@@ -135,6 +135,23 @@ public function panel(Panel $panel): Panel
 }
 ```
 
+### Create Another
+
+By default, the ability to create another record will respect the settings of your 'create record' or 'list records' create action. This can be overridden to either enable or disable it for all resources with the `createAnother()` method.
+
+```php
+use Awcodes\FilamentQuickCreate\QuickCreatePlugin;
+
+public function panel(Panel $panel): Panel
+{
+    return $panel
+        ->plugins([
+            QuickCreatePlugin::make()
+                ->createAnother(false),
+        ])
+}
+```
+
 ### Appearance
 
 #### Rounded

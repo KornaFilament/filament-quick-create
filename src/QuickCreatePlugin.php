@@ -42,6 +42,8 @@ class QuickCreatePlugin implements Plugin
 
     protected string | array | Closure | null $keyBindings = null;
 
+    protected bool | Closure | null $createAnother = null;
+
     public function boot(Panel $panel): void
     {
         Livewire::component('quick-create-menu', Components\QuickCreateMenu::class);
@@ -260,5 +262,17 @@ class QuickCreatePlugin implements Plugin
     public function getKeyBindings(): ?array
     {
         return collect($this->evaluate($this->keyBindings))->toArray();
+    }
+
+    public function createAnother(bool | Closure $condition = true): static
+    {
+        $this->createAnother = $condition;
+
+        return $this;
+    }
+
+    public function canCreateAnother(): ?bool
+    {
+        return $this->evaluate($this->createAnother);
     }
 }
